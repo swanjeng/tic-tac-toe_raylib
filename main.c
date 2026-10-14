@@ -97,53 +97,114 @@ bool hovered(Vector2 mousePos, int i, int j) {
 }
 
 
-int checkWin() {
+int checkWin(int board[3][3], int toggleWin) {
     if (board[0][0] && board[0][0] == board[0][1] && board[0][1] == board[0][2]) {
-        winStart = drawBoardPositions[0][0];
-        winEnd = drawBoardPositions[0][2];
+        if (toggleWin) {
+            winStart = drawBoardPositions[0][0];
+            winEnd = drawBoardPositions[0][2];
+        }
         return board[0][0];
     }
     if (board[1][0] && board[1][0] == board[1][1] && board[1][1] == board[1][2]) {
-        winStart = drawBoardPositions[1][0];
-        winEnd = drawBoardPositions[1][2];
+        if (toggleWin) {
+            winStart = drawBoardPositions[1][0];
+            winEnd = drawBoardPositions[1][2];
+        }
         return board[1][0];
     }
     if (board[2][0] && board[2][0] == board[2][1] && board[2][1] == board[2][2]) {
-        winStart = drawBoardPositions[2][0];
-        winEnd = drawBoardPositions[2][2];
+        if (toggleWin) {
+            winStart = drawBoardPositions[2][0];
+            winEnd = drawBoardPositions[2][2];
+        }
         return board[2][0];
     }
     if (board[0][0] && board[0][0] == board[1][0] && board[1][0] == board[2][0]) {
-        winStart = drawBoardPositions[0][0];
-        winEnd = drawBoardPositions[2][0];
+        if (toggleWin) {
+            winStart = drawBoardPositions[0][0];
+            winEnd = drawBoardPositions[2][0];
+        }
         return board[0][0];
     }
     if (board[0][1] && board[0][1] == board[1][1] && board[1][1] == board[2][1]) {
-        winStart = drawBoardPositions[0][1];
-        winEnd = drawBoardPositions[2][1];
+        if (toggleWin) {
+            winStart = drawBoardPositions[0][1];
+            winEnd = drawBoardPositions[2][1];
+        }
         return board[0][1];
     }
     if (board[0][2] && board[0][2] == board[1][2] && board[1][2] == board[2][2]) {
-        winStart = drawBoardPositions[0][2];
-        winEnd = drawBoardPositions[2][2];
+        if (toggleWin) {
+            winStart = drawBoardPositions[0][2];
+            winEnd = drawBoardPositions[2][2];
+        }
         return board[0][2];
     }
     if (board[0][0] && board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
-        winStart = drawBoardPositions[0][0];
-        winEnd = drawBoardPositions[2][2];
+        if (toggleWin) {
+            winStart = drawBoardPositions[0][0];
+            winEnd = drawBoardPositions[2][2];
+        }
         return board[0][0];
     }
     if (board[0][2] && board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
-        winStart = drawBoardPositions[0][2];
-        winEnd = drawBoardPositions[2][0];
+        if (toggleWin) {
+            winStart = drawBoardPositions[0][2];
+            winEnd = drawBoardPositions[2][0];
+        }
         return board[0][2];
     }
     return -1;
 }
 
 
-void GetAIMove() {
+int checkFull() {
+    for (int i = 0 ; i < 3 ; i ++) {
+        for (int j = 0 ; j < 3 ; j ++) {
+            if (board[i][j] == 0) return 0;
+        }
+    }
+    return 1;
+}
 
+
+void GetAIMove() {
+    int board_copy[3][3];
+    for (int i = 0 ; i < 3 ; i ++) {
+        for (int j = 0 ; j < 3 ; j ++) board_copy[i][j] = board[i][j];
+    }
+    for (int i = 0 ; i < 3 ; i ++) {
+        for (int j = 0 ; j < 3 ; j ++) {
+            if (board_copy[i][j] == 0) {
+                board_copy[i][j] = AI;
+                if (checkWin(board_copy, 0) == AI) {
+                    board[i][j] = AI;
+                    return;
+                }
+                board_copy[i][j] = 0;
+            }
+        }
+    }
+    for (int i = 0 ; i < 3 ; i ++) {
+        for (int j = 0 ; j < 3 ; j ++) {
+            if (board_copy[i][j] == 0) {
+                board_copy[i][j] = HUMAN;
+                if (checkWin(board_copy, 0) == HUMAN) {
+                    board[i][j] = AI;
+                    return;
+                }
+                board_copy[i][j] = 0;
+            }
+        }
+    }
+
+    int x = GetRandomValue(0, 2), y = GetRandomValue(0, 2);
+    while (board[x][y]) {
+        x = GetRandomValue(0, 2);
+        y = GetRandomValue(0, 2);
+    }
+    board[x][y] = AI;
+    return;
 }
 
 
@@ -162,14 +223,16 @@ int main() {
                         flag = 1;
                         if (board[i][j] == 0) {
                             board[i][j] = HUMAN;
-                            if (checkWin() == HUMAN) {
+                            if (checkWin(board, 1) == HUMAN) {
                                 pause = 1;
                                 break;
                             }
-                            GetAIMove();
-                            if (checkWin() == AI) {
-                                pause = 1;
-                                break;
+                            if (!checkFull()) {
+                                GetAIMove();
+                                if (checkWin(board, 1) == AI) {
+                                    pause = 1;
+                                    break;
+                                }
                             }
                         }
                         break;
@@ -178,6 +241,8 @@ int main() {
                 if (flag) break;
             }
         }
+
+        if (checkFull() && checkWin(board, 1) == -1) pause = 1;
 
         if (pause && IsKeyDown(KEY_R)) {
             pause = 0;
